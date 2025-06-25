@@ -20,7 +20,7 @@
 - The `common` module contains the common utilities used across the project
 - The `scraper` module contains the code related to the scraper
 - The `processor` module contains code related to the processor
-- The `api/` directory is the root directory storing the collection files for a popult REST API client
+- The `api/` directory is the root directory storing the collection files for a popular REST API client
   called [Bruno](https://www.usebruno.com) which we use for testing
 
 ```
@@ -107,7 +107,7 @@ docker logs exist-db
 | Scraper   | 8081 |
 | Processor | 8082 |
 
-- Once the services and the database is up and running, perform a REST API POST request to `/load/all` endpoint of the
+- Once the services and the database are up and running, perform a REST API POST request to `/load/all` endpoint of the
   scraper to start the process.
 - You can verify the data insertion using RESTful API provided by eXist-DB as
   documented [here](https://exist-db.org/exist/apps/doc/devguide_rest)
