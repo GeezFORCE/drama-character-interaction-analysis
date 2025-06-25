@@ -7,7 +7,7 @@
         <groupId>com.texttechnology</groupId>
         <artifactId>dcia</artifactId>
         <version>1.0.0</version>
-        <relativePath/>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>processor</artifactId>
 

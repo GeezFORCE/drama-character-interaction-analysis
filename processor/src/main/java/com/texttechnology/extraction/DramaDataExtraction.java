@@ -5,11 +5,9 @@ import com.texttechnology.data.drama.Drama.DramaBuilder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPathConstants;
 import java.io.StringReader;
 
 import static com.texttechnology.extraction.ExtractionFunctions.*;
@@ -27,13 +25,16 @@ public class DramaDataExtraction {
         playDoc = dbf.newDocumentBuilder().parse(new InputSource(new StringReader(playXML)));
     }
 
+    /**
+     * @return A POJO containing the extracted data for the drama
+     */
     public Drama extractData() {
-        getSceneCount(playDoc);
+        getScenes(playDoc);
         return drama.title(getTitle.apply(playDoc))
                 .authorName(getAuthor.apply(playDoc))
                 .date(getDate.apply(playDoc))
                 .castList(getCast.apply(playDoc))
-                .scenes(getSceneCount(playDoc))
+                .scenes(getScenes(playDoc))
                 .build();
     }
 

@@ -24,16 +24,28 @@ public class ExtractionFunctions {
 
     private static final XPath xpath = XPathFactory.newInstance().newXPath();
 
+
+    /**
+     * Evaluate the xpath and get the title of the drama
+     */
     public static Function<Document, String> getTitle = doc -> Try.of(() -> xpath.evaluate("//title", doc, XPathConstants.STRING))
             .map(String::valueOf)
             .peek(title -> log.debug("Title: {}", title))
             .getOrNull();
 
+
+    /**
+     * Evaluate the xpath to get the published data of the drama
+     */
     public static Function<Document, String> getDate = doc -> Try.of(() -> xpath.evaluate("//event/@when", doc, XPathConstants.STRING))
             .map(String::valueOf)
             .peek(date -> log.debug("Date: {}", date))
             .getOrNull();
 
+
+    /**
+     * Evaluate xpath to get the author details of the drama
+     */
     public static Function<Document, String> getAuthor = doc -> Try.of(() -> {
                 String foreName = xpath.evaluate("//author/forename", doc, XPathConstants.STRING).toString();
                 String surname = xpath.evaluate("//author/surname", doc, XPathConstants.STRING).toString();
@@ -44,6 +56,10 @@ public class ExtractionFunctions {
             .peek(author -> log.debug("Author: {}", author))
             .getOrNull();
 
+    /**
+     * Evaluate xpath to get the list of cast of the drama
+     * For each cast; their ID, name and gener are extracted
+     */
     public static Function<Document, List<Cast>> getCast = doc -> Try.of(() -> {
                 NodeList persons = (NodeList) xpath.evaluate("//listPerson/person", doc, XPathConstants.NODESET);
                 return IntStream.range(0, persons.getLength())
@@ -59,6 +75,13 @@ public class ExtractionFunctions {
             .peek(castList -> log.debug("Cast List: {}", castList))
             .getOrNull();
 
+    /**
+     * Function to get the lines of the speakers in each scene
+     *
+     * @param scene DOM element of the scene
+     * @return A Scene POJO containing the details
+     * @status WIP
+     */
     public static Scene getSpeakersInScene(Element scene) {
         NodeList spNodes = scene.getElementsByTagName("sp");
         var allSpeakers = IntStream.range(0, spNodes.getLength())
@@ -86,8 +109,17 @@ public class ExtractionFunctions {
         return Scene.builder().distinctSpeakers(distinctSpeakers).speakers(allSpeakers).build();
 
     }
+
+    /**
+     * Function to get the scenes of the play
+     * Each scene object will contain the speaker details along with the lines spoken by each speaker
+     *
+     * @param doc DOM
+     * @return list of scenes in the drama
+     * @status WIP
+     */
     @SneakyThrows
-    public static List<Scene> getSceneCount(Document doc) {
+    public static List<Scene> getScenes(Document doc) {
         int sceneCount = 0;
         NodeList speakers = (NodeList) xpath.evaluate("//div[@type = 'scene']", doc, XPathConstants.NODESET);
 

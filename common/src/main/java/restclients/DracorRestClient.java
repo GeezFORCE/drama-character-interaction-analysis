@@ -14,12 +14,23 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 @Dependent
 public interface DracorRestClient {
 
+    /**
+     * REST Client Operation to get the TEI i.e., XML content of a play from DraCor
+     *
+     * @param play ID of the play
+     * @return XML String containing the content of the play
+     */
     @GET
     @Path("/eng/plays/{play}/tei")
     @Produces(MediaType.APPLICATION_XML)
     String getTeiForPlay(@PathParam("play") String play);
 
 
+    /**
+     * REST Client operation to get a list of all the plays in DraCor English corpus
+     *
+     * @return JsonObject containing details about all the plays in the corpus
+     */
     @GET
     @Path("/eng")
     @Produces(MediaType.APPLICATION_JSON)

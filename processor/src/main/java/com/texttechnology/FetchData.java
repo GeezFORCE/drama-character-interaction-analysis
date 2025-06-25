@@ -26,6 +26,11 @@ public class FetchData {
 
     XmlMapper mapper = new XmlMapper();
 
+
+    /**
+     * Loads all the drama inserted into the eXist-DB by the scraper and process it.
+     * Implemented as a periodic job (might move to a REST API in the future)
+     */
     @SneakyThrows
     @FixedRate(initialDelay = 5, value = 60, timeUnit = TimeUnit.SECONDS)
     public void fetch() {

@@ -30,29 +30,47 @@ public class LoadDataSet {
     @RestClient
     ExistDbRestClient existDbRestClient;
 
+
+    /**
+     * API Endpoint to load specific dramas (mainly for testing)
+     *
+     * @param body JSON Array listing the dramas to be loaded (must be the ID of the drama in DraCor)
+     * @return REST Response
+     */
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RequestBody(required = true, content = @Content(mediaType = "application/json", schema = @Schema(type = SchemaType.OBJECT)))
     public Response loadDataSet(JsonArray body) {
         log.info("Received body: {}", body);
+
+        // Extracts the plays in the body one by one and creates a list
         var plays = body.stream()
                 .map(JsonString.class::cast)
                 .map(JsonString::getString)
                 .map(String::trim)
                 .toList();
 
+        // Insert the plays to the eXist DB
         plays.forEach(this::insertPlayToExistDb);
 
         return Response.ok().build();
     }
 
+
+    /**
+     * API Endpoint to handle the request to load all the data from Dracor
+     *
+     * @return REST Response
+     */
     @PUT
     @Path("/all")
     @Produces(MediaType.APPLICATION_JSON)
     public Response loadEntireDataSet() {
         log.info("Getting details of all plays");
         JsonArrayBuilder playDetails = Json.createArrayBuilder();
+
+        // Requests Dracor for all the plays and for each retrieve the XML content and inserts it into the eXist DB
         dracorRestClient.getAllPlayDetails()
                 .getJsonArray("plays")
                 .stream()
@@ -69,6 +87,12 @@ public class LoadDataSet {
                 .build();
     }
 
+
+    /**
+     * Gets the TEI content of the drama
+     *
+     * @param play Name of the play
+     */
     private void insertPlayToExistDb(String play) {
         try (Response r = existDbRestClient.insertPlay(play, dracorRestClient.getTeiForPlay(play))) {
             log.info("Response Status: {}", r.getStatus());
