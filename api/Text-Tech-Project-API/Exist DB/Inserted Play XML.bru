@@ -1,0 +1,20 @@
+meta {
+  name: Inserted Play XML
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:8080/exist/rest/db/plays/:play-name
+  body: xml
+  auth: basic
+}
+
+params:path {
+  play-name: anon-a-larum-for-london.xml
+}
+
+auth:basic {
+  username: admin
+  password: 
+}

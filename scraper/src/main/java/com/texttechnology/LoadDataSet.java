@@ -1,0 +1,83 @@
+package com.texttechnology;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.json.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import restclients.DracorRestClient;
+import restclients.ExistDbRestClient;
+
+@Path("/load")
+@RequestScoped
+@Slf4j
+public class LoadDataSet {
+    @Inject
+    @RestClient
+    DracorRestClient dracorRestClient;
+
+    @Inject
+    @RestClient
+    ExistDbRestClient existDbRestClient;
+
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RequestBody(required = true, content = @Content(mediaType = "application/json", schema = @Schema(type = SchemaType.OBJECT)))
+    public Response loadDataSet(JsonArray body) {
+        log.info("Received body: {}", body);
+        var plays = body.stream()
+                .map(JsonString.class::cast)
+                .map(JsonString::getString)
+                .map(String::trim)
+                .toList();
+
+        plays.forEach(this::insertPlayToExistDb);
+
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path("/all")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response loadEntireDataSet() {
+        log.info("Getting details of all plays");
+        JsonArrayBuilder playDetails = Json.createArrayBuilder();
+        dracorRestClient.getAllPlayDetails()
+                .getJsonArray("plays")
+                .stream()
+                .map(JsonValue::asJsonObject)
+                .map(jsonObject -> jsonObject.getString("name"))
+                .limit(30)
+                .peek(play -> log.info("Loading play: {}", play))
+                .forEach(play -> {
+                    playDetails.add(play);
+                    insertPlayToExistDb(play);
+                });
+        return Response.ok()
+                .entity(playDetails.build())
+                .build();
+    }
+
+    private void insertPlayToExistDb(String play) {
+        try (Response r = existDbRestClient.insertPlay(play, dracorRestClient.getTeiForPlay(play))) {
+            log.info("Response Status: {}", r.getStatus());
+            log.info("Response Body : {}", r.readEntity(String.class));
+        } catch (Exception e) {
+            log.error("Error inserting play {} : {}", play, e.toString());
+        } finally {
+            log.info("Finished loading play: {}", play);
+        }
+    }
+
+}

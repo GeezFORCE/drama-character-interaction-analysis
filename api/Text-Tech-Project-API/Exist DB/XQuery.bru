@@ -1,0 +1,25 @@
+meta {
+  name: XQuery
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:8080/exist/rest/db
+  body: xml
+  auth: basic
+}
+
+auth:basic {
+  username: admin
+  password: 
+}
+
+body:xml {
+  <query xmlns="http://exist.sourceforge.net/NS/exist">
+      <text>
+          for $doc in collection('/db/plays')
+          return base-uri($doc)
+      </text>
+  </query>
+}

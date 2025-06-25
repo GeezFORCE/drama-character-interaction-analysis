@@ -1,0 +1,16 @@
+meta {
+  name: Details of all inserted plays
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:8080/exist/rest/db/plays
+  body: none
+  auth: basic
+}
+
+auth:basic {
+  username: admin
+  password: 
+}

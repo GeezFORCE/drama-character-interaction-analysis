@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  exist-db:
+    image: ubuntu:20.04
+    container_name: exist-db
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+    volumes:
+      - exist_data:/opt/exist/webapp/WEB-INF/data
+      - exist_logs:/opt/exist/logs
+      - exist_backups:/opt/exist/backup
+    working_dir: /opt/exist
+    command: >
+      bash -c "
+      apt-get update &&
+      apt-get install -y openjdk-11-jdk curl wget unzip bzip2 &&
+      export JAVA_HOME=\$(dirname \$(dirname \$(readlink -f \$(which java)))) &&
+      echo \"JAVA_HOME set to: \$JAVA_HOME\" &&
+      if [ ! -f /opt/exist/bin/startup.sh ]; then
+        wget -O exist.tar.bz2 https://github.com/eXist-db/exist/releases/download/eXist-6.4.0/exist-distribution-6.4.0-unix.tar.bz2 &&
+        tar -xjf exist.tar.bz2 --strip-components=1 &&
+        rm exist.tar.bz2
+      fi &&
+      echo 'Starting eXist-db...' &&
+      ./bin/startup.sh
+      "
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/exist/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s
+
+volumes:
+  exist_data:
+    driver: local
+  exist_logs:
+    driver: local
+  exist_backups:
+    driver: local

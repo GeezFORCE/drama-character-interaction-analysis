@@ -1,0 +1,15 @@
+meta {
+  name: Play TEI Version
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://dracor.org/api/v1/corpora/eng/plays/:play_id/tei
+  body: none
+  auth: inherit
+}
+
+params:path {
+  play_id: rutter-the-shepherds-holiday
+}

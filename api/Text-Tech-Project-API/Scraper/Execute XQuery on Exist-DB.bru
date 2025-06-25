@@ -1,0 +1,11 @@
+meta {
+  name: Execute XQuery on Exist-DB
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/exist/rest/db
+  body: xml
+  auth: inherit
+}

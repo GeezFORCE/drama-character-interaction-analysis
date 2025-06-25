@@ -1,0 +1,15 @@
+meta {
+  name: Process Play
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8082/process/:play
+  body: none
+  auth: inherit
+}
+
+params:path {
+  play: udall-ralph-roister-doister.xml
+}
