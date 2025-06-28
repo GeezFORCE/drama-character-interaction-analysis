@@ -21,7 +21,7 @@ public class DramaDataExtraction {
     @SneakyThrows
     public DramaDataExtraction(String playXML) {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(false);
+        dbf.setNamespaceAware(true);
         playDoc = dbf.newDocumentBuilder().parse(new InputSource(new StringReader(playXML)));
     }
 
