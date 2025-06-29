@@ -17,6 +17,7 @@ import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import restclients.DracorRestClient;
 import restclients.ExistDbRestClient;
+import restclients.ProcessorRestClient;
 
 @Path("/load")
 @RequestScoped
@@ -29,6 +30,10 @@ public class LoadDataSet {
     @Inject
     @RestClient
     ExistDbRestClient existDbRestClient;
+
+    @Inject
+    @RestClient
+    ProcessorRestClient processorRestClient;
 
 
     /**
@@ -81,6 +86,7 @@ public class LoadDataSet {
                 .forEach(play -> {
                     playDetails.add(play);
                     insertPlayToExistDb(play);
+                    processorRestClient.process(play);
                 });
         return Response.ok()
                 .entity(playDetails.build())
