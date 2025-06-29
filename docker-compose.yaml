@@ -30,11 +30,28 @@ services:
       "
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/exist/"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/exist/" ]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 300s
+
+
+
+  neo4j:
+    container_name: neo4j
+    image: neo4j:latest
+    volumes:
+      - neo4j_logs:/logs
+      - neo4j_config:/config
+      - neo4j_data:/data
+      - neo4j_plugins:/plugins
+    environment:
+      - NEO4J_AUTH=neo4j/dcia
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    restart: always
 
 volumes:
   exist_data:
@@ -42,4 +59,12 @@ volumes:
   exist_logs:
     driver: local
   exist_backups:
+    driver: local
+  neo4j_logs:
+    driver: local
+  neo4j_config:
+    driver: local
+  neo4j_data:
+    driver: local
+  neo4j_plugins:
     driver: local

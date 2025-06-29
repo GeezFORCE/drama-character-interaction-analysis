@@ -8,7 +8,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.XMLConstants;
@@ -38,8 +37,16 @@ public class ExtractionFunctions {
                     default -> XMLConstants.NULL_NS_URI;
                 };
             }
-            @Override public String getPrefix(String uri) { return null; }
-            @Override public Iterator<String> getPrefixes(String uri) { return null; }
+
+            @Override
+            public String getPrefix(String uri) {
+                return null;
+            }
+
+            @Override
+            public Iterator<String> getPrefixes(String uri) {
+                return null;
+            }
         });
     }
 
@@ -94,41 +101,6 @@ public class ExtractionFunctions {
             .getOrNull();
 
     /**
-     * Function to get the lines of the speakers in each scene
-     *
-     * @param scene DOM element of the scene
-     * @return A Scene POJO containing the details
-     * @status WIP
-     */
-    public static Scene getSpeakersInScene(Element scene) {
-        NodeList spNodes = scene.getElementsByTagName("sp");
-        var allSpeakers = IntStream.range(0, spNodes.getLength())
-                .mapToObj(spNodes::item)
-                .map(Element.class::cast)
-                .map(spEl -> {
-                    String who = spEl.getAttribute("who");
-                    NodeList lNodes = spEl.getElementsByTagName("l");
-
-                    List<String> lines = IntStream.range(0, lNodes.getLength())
-                            .mapToObj(lNodes::item)
-                            .map(Node::getTextContent)
-                            .map(String::trim)
-                            .toList();
-
-                    return Speaker.builder()
-                            .speaker(who)
-                            .lines(lines)
-                            .build();
-                })
-                .toList();
-
-        var distinctSpeakers = allSpeakers.stream().map(Speaker::getSpeaker).distinct().toList();
-
-        return Scene.builder().distinctSpeakers(distinctSpeakers).speakers(allSpeakers).build();
-
-    }
-
-    /**
      * Function to get the scenes of the play
      * Each scene object will contain the speaker details along with the lines spoken by each speaker
      *
@@ -138,18 +110,16 @@ public class ExtractionFunctions {
      */
     @SneakyThrows
     public static List<Scene> getScenes(Document doc) {
-        int sceneCount = 0;
         NodeList divList = (NodeList) xpath.evaluate("//tei:body/tei:div", doc, XPathConstants.NODESET);
         List<Scene> sceneList = new ArrayList<Scene>();
 
-        for(int i = 0; i < divList.getLength(); i++) {
+        for (int i = 0; i < divList.getLength(); i++) {
             String sceneId = divList.item(i).getAttributes().getNamedItem("xml:id").getNodeValue();
             String expr = String.format("//tei:body/tei:div[@xml:id= '%s']//tei:sp", sceneId);
             NodeList spList = (NodeList) xpath.evaluate(expr, doc, XPathConstants.NODESET);
             List<Speaker> speakers = new ArrayList<Speaker>();
             for (int j = 0; j < spList.getLength(); j++) {
-                if (Optional.ofNullable(spList.item(j).getAttributes().getNamedItem("who")).isPresent())
-                {
+                if (Optional.ofNullable(spList.item(j).getAttributes().getNamedItem("who")).isPresent()) {
                     String speakerId = spList.item(j).getAttributes().getNamedItem("who").getNodeValue();
                     String lineExpr = String.format("//tei:body/tei:div[@xml:id= '%s']//tei:sp[@who = '%s']//tei:l", sceneId, speakerId);
                     NodeList lineList = (NodeList) xpath.evaluate(lineExpr, doc, XPathConstants.NODESET);

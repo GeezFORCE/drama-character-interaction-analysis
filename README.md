@@ -94,7 +94,7 @@ docker logs exist-db
 
 ## How to test the code
 
-> It will be easier if you have [Bruno](https://www.usebruno.com) installed
+> It will be easier if you have [Bruno](https://www.usebruno.com) installed.
 > You can also use other API clients like `Postman` or even `curl` from the command line
 
 - Open the folder `api` in bruno to view the collection
