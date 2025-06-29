@@ -36,8 +36,6 @@ services:
       retries: 5
       start_period: 300s
 
-
-
   neo4j:
     container_name: neo4j
     image: neo4j:latest
@@ -47,7 +45,7 @@ services:
       - neo4j_data:/data
       - neo4j_plugins:/plugins
     environment:
-      - NEO4J_AUTH=neo4j/dcia
+        - NEO4J_AUTH=neo4j/your_password
     ports:
       - "7474:7474"
       - "7687:7687"

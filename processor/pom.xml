@@ -79,6 +79,10 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.helidon.integrations.neo4j</groupId>
+            <artifactId>helidon-integrations-neo4j</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.texttechnology</groupId>
             <artifactId>common</artifactId>
             <version>1.0.0</version>

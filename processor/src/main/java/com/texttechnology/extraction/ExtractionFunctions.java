@@ -111,8 +111,7 @@ public class ExtractionFunctions {
     @SneakyThrows
     public static List<Scene> getScenes(Document doc) {
         NodeList divList = (NodeList) xpath.evaluate("//tei:body/tei:div", doc, XPathConstants.NODESET);
-        List<Scene> sceneList = new ArrayList<Scene>();
-
+        List<Scene> sceneList = new ArrayList<>();
         for (int i = 0; i < divList.getLength(); i++) {
             String sceneId = divList.item(i).getAttributes().getNamedItem("xml:id").getNodeValue();
             String expr = String.format("//tei:body/tei:div[@xml:id= '%s']//tei:sp", sceneId);
@@ -134,7 +133,6 @@ public class ExtractionFunctions {
             List<String> distinctSpeakers = speakers.stream().map(Speaker::getSpeaker).distinct().toList();
             sceneList.add(Scene.builder().distinctSpeakers(distinctSpeakers).speakers(speakers).build());
         }
-        System.out.println(sceneList.size());
         return sceneList;
     }
 }

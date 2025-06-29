@@ -24,6 +24,9 @@ public class FetchData {
     @RestClient
     ExistDbRestClient existDbRestClient;
 
+    @Inject
+    DramaRepository dramaRepository;
+
     XmlMapper mapper = new XmlMapper();
 
 
@@ -55,10 +58,10 @@ public class FetchData {
                 .stream()
                 .map(play -> existDbRestClient.getPlayXML(play))
                 .map(play -> new DramaDataExtraction(play).extractData())
+                .peek(drama -> log.info("Drama extracted: {}", drama.toString()))
                 .toList();
 
-        dramas.forEach(drama -> log.info("Drama: {}", drama.toString()));
-
+        dramas.stream().peek(drama -> log.info("Inserting drama {} into Neo4J", drama.getTitle())).forEach(drama -> dramaRepository.insertDrama(drama));
     }
 
 }
