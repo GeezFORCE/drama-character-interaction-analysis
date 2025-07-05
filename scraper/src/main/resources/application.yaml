@@ -1,0 +1,13 @@
+server:
+  host: 0.0.0.0
+  port: 8081
+
+metrics:
+  rest-request:
+    enabled: false
+
+dracor-api/mp-rest/url: https://dracor.org
+
+exist-db/mp-rest/url: ${EXIST_DB_URL:http://localhost:8080}
+
+processor/mp-rest/url: ${PROCESSOR_URL:http://localhost:8082}

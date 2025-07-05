@@ -3,7 +3,9 @@ server:
   port: 8082
 
 neo4j:
-  uri: bolt://localhost:7687
+  uri: ${NEO4J_URL:bolt://localhost:7687}
   authentication:
     username: neo4j
     password: your_password
+
+exist-db/mp-rest/url: ${EXIST_DB_URL:http://localhost:8080}
