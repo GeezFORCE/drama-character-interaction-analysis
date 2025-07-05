@@ -91,7 +91,7 @@ public class ExtractionFunctions {
                         .mapToObj(persons::item)
                         .map(Element.class::cast)
                         .map(cast -> Cast.builder()
-                                .id(cast.getAttribute("id"))
+                                .id("#" + cast.getAttribute("xml:id"))
                                 .name(cast.getElementsByTagName("persName").item(0).getTextContent())
                                 .sex(cast.getAttribute("sex"))
                                 .build())
@@ -131,7 +131,7 @@ public class ExtractionFunctions {
                 }
             }
             List<String> distinctSpeakers = speakers.stream().map(Speaker::getSpeaker).distinct().toList();
-            sceneList.add(Scene.builder().distinctSpeakers(distinctSpeakers).speakers(speakers).build());
+            sceneList.add(Scene.builder().sceneId(sceneId).distinctSpeakers(distinctSpeakers).speakers(speakers).build());
         }
         return sceneList;
     }
