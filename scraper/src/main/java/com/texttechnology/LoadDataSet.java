@@ -1,5 +1,6 @@
 package com.texttechnology;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.json.*;
@@ -10,6 +11,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -34,6 +36,15 @@ public class LoadDataSet {
     @Inject
     @RestClient
     ProcessorRestClient processorRestClient;
+
+    @Inject
+    @ConfigProperty(name = "processor/mp-rest/url")
+    String endpointUrl;
+
+    @PostConstruct
+    void logEndpointUrl() {
+        log.info("Processor endpoint URL: {}", endpointUrl);
+    }
 
 
     /**

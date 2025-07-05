@@ -1,6 +1,5 @@
 package com.texttechnology;
 
-import com.texttechnology.data.drama.Cast;
 import com.texttechnology.data.drama.Drama;
 import com.texttechnology.data.drama.Scene;
 import com.texttechnology.data.drama.Speaker;
@@ -20,6 +19,38 @@ import java.util.Map;
 public class DramaRepository {
 
     private final Driver driver;
+
+    private static final String CREATE_DRAMA_NODE = """
+            MERGE (d:Drama {title: $title})
+            SET d.authorName = $authorName,
+                d.date = $date,
+                d.createdAt = datetime()
+            """;
+
+    private static final String CREATE_CAST_NODE = """
+            MATCH (d:Drama {title: $dramaTitle})
+            MERGE (c:Character {castId: $castId})
+            SET c.name = $name,
+                c.sex = $sex
+            MERGE (d)-[:HAS_CHARACTER]->(c)
+            """;
+
+    private static final String CREATE_SCENE_NODE = """
+            MATCH (d:Drama {title: $dramaTitle})
+                MERGE (s:Scene {dramaTitle: $dramaTitle, sceneId: $sceneId})
+                SET s.distinctSpeakers = $distinctSpeakers,
+                    s.speakerCount = $speakerCount
+                MERGE (d)-[:HAS_SCENE]->(s)
+            """;
+
+    private static final String CREATE_SPEAKER_RELATION = """
+            MATCH (d:Drama {title: $dramaTitle})
+            MATCH (s:Scene {dramaTitle: $dramaTitle, sceneId: $sceneId})
+            MATCH (d)-[:HAS_CHARACTER]->(c:Character {castId: $castId})
+            MERGE (c)-[r:SPEAKS_IN]->(s)
+            SET r.lineCount = $lineCount,
+                r.lines = $lines
+            """;
 
     @Inject
     public DramaRepository(Driver driver) {
@@ -47,14 +78,7 @@ public class DramaRepository {
     }
 
     private void createDramaNode(Transaction tx, Drama drama) {
-        String cypher = """
-                MERGE (d:Drama {title: $title})
-                SET d.authorName = $authorName,
-                    d.date = $date,
-                    d.createdAt = datetime()
-                """;
-
-        tx.run(cypher, Values.parameters(
+        tx.run(CREATE_DRAMA_NODE, Values.parameters(
                 "title", drama.getTitle(),
                 "authorName", drama.getAuthorName(),
                 "date", drama.getDate()
@@ -62,24 +86,12 @@ public class DramaRepository {
     }
 
     private void createCastNodes(Transaction tx, Drama drama) {
-        if (drama.getCastList() == null) return;
-
-        for (Cast cast : drama.getCastList()) {
-            String cypher = """
-                    MATCH (d:Drama {title: $dramaTitle})
-                    MERGE (c:Character {id: $castId})
-                    SET c.name = $name,
-                        c.sex = $sex
-                    MERGE (d)-[:HAS_CHARACTER]->(c)
-                    """;
-
-            tx.run(cypher, Values.parameters(
-                    "dramaTitle", drama.getTitle(),
-                    "castId", cast.getId(),
-                    "name", cast.getName(),
-                    "sex", cast.getSex()
-            ));
-        }
+        drama.getCastList().stream().peek(cast -> log.error("Cast ID : {}", cast.getId())).forEach(cast -> tx.run(CREATE_CAST_NODE, Values.parameters(
+                "dramaTitle", drama.getTitle(),
+                "castId", cast.getId(),
+                "name", cast.getName(),
+                "sex", cast.getSex()
+        )));
     }
 
     private void createScenesAndInteractions(Transaction tx, Drama drama) {
@@ -90,64 +102,43 @@ public class DramaRepository {
             int sceneNumber = sceneIndex + 1;
 
             // Create Scene node
-            createSceneNode(tx, drama.getTitle(), sceneNumber, scene);
+            createSceneNode(tx, drama.getTitle(), scene);
 
             // Create speaker interactions within the scene
-            createSpeakerInteractions(tx, drama.getTitle(), sceneNumber, scene);
+            createSpeakerInteractions(tx, drama.getTitle(), scene);
 
             // Create character co-appearance relationships
-            createCoAppearanceRelationships(tx, drama.getTitle(), sceneNumber, scene);
+            createCoAppearanceRelationships(tx, drama.getTitle(), scene);
         }
     }
 
-    private void createSceneNode(Transaction tx, String dramaTitle, int sceneNumber, Scene scene) {
-        String cypher = """
-                MATCH (d:Drama {title: $dramaTitle})
-                MERGE (s:Scene {dramaTitle: $dramaTitle, number: $sceneNumber})
-                SET s.distinctSpeakers = $distinctSpeakers,
-                    s.speakerCount = $speakerCount
-                MERGE (d)-[:HAS_SCENE]->(s)
-                """;
-
-        tx.run(cypher, Values.parameters(
+    private void createSceneNode(Transaction tx, String dramaTitle, Scene scene) {
+        tx.run(CREATE_SCENE_NODE, Values.parameters(
                 "dramaTitle", dramaTitle,
-                "sceneNumber", sceneNumber,
+                "sceneId", scene.getSceneId(),
                 "distinctSpeakers", scene.getDistinctSpeakers(),
                 "speakerCount", scene.getDistinctSpeakers() != null ? scene.getDistinctSpeakers().size() : 0
         ));
     }
 
-    private void createSpeakerInteractions(Transaction tx, String dramaTitle, int sceneNumber, Scene scene) {
+    private void createSpeakerInteractions(Transaction tx, String dramaTitle, Scene scene) {
         if (scene.getSpeakers() == null) return;
 
-        for (int speakerIndex = 0; speakerIndex < scene.getSpeakers().size(); speakerIndex++) {
-            Speaker speaker = scene.getSpeakers().get(speakerIndex);
-
-            // Create SPEAKS relationship
-            String cypher = """
-                    MATCH (s:Scene {dramaTitle: $dramaTitle, number: $sceneNumber})
-                    MERGE (c:Character {name: $speakerName})
-                    MERGE (c)-[r:SPEAKS_IN]->(s)
-                    SET r.lineCount = $lineCount,
-                        r.lines = $lines,
-                        r.speakingOrder = $speakingOrder
-                    """;
-
-            tx.run(cypher, Values.parameters(
-                    "dramaTitle", dramaTitle,
-                    "sceneNumber", sceneNumber,
-                    "speakerName", speaker.getSpeaker(),
-                    "lineCount", speaker.getLines() != null ? speaker.getLines().size() : 0,
-                    "lines", speaker.getLines(),
-                    "speakingOrder", speakerIndex
-            ));
-        }
-
+        scene.getSpeakers()
+                .forEach(speaker -> {
+                    tx.run(CREATE_SPEAKER_RELATION, Values.parameters(
+                            "dramaTitle", dramaTitle,
+                            "sceneId", scene.getSceneId(),
+                            "castId", speaker.getSpeaker(),
+                            "lineCount", speaker.getLines() != null ? speaker.getLines().size() : 0,
+                            "lines", speaker.getLines()
+                    ));
+                });
         // Create sequential dialogue interactions
-        createDialogueSequence(tx, dramaTitle, sceneNumber, scene);
+        createDialogueSequence(tx, dramaTitle, scene);
     }
 
-    private void createDialogueSequence(Transaction tx, String dramaTitle, int sceneNumber, Scene scene) {
+    private void createDialogueSequence(Transaction tx, String dramaTitle, Scene scene) {
         if (scene.getSpeakers() == null || scene.getSpeakers().size() < 2) return;
 
         List<Speaker> speakers = scene.getSpeakers();
@@ -159,12 +150,13 @@ public class DramaRepository {
             if (!currentSpeaker.getSpeaker().equals(nextSpeaker.getSpeaker())) {
                 // Create bidirectional INTERACTS_WITH relationship to represent character interaction
                 String cypherInteraction = """
-                        MATCH (c1:Character {name: $speaker1})
-                        MATCH (c2:Character {name: $speaker2})
-                        MATCH (s:Scene {dramaTitle: $dramaTitle, number: $sceneNumber})
+                        MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
+                        MATCH (d)-[:HAS_CHARACTER]->(c2:Character)
+                        WHERE c1.castId = $speaker1 AND c2.castId = $speaker2
+                        MATCH (s:Scene {dramaTitle: $dramaTitle, sceneId: $sceneId})
                         MERGE (c1)-[r:INTERACTS_WITH]-(c2)
                         SET r.interactionCount = COALESCE(r.interactionCount, 0) + 1,
-                            r.lastScene = $sceneNumber,
+                            r.lastScene = $sceneId,
                             r.dramaTitle = $dramaTitle
                         MERGE (c1)-[:INTERACTS_IN]->(s)
                         MERGE (c2)-[:INTERACTS_IN]->(s)
@@ -174,14 +166,15 @@ public class DramaRepository {
                         "speaker1", currentSpeaker.getSpeaker(),
                         "speaker2", nextSpeaker.getSpeaker(),
                         "dramaTitle", dramaTitle,
-                        "sceneNumber", sceneNumber
+                        "sceneId", scene.getSceneId()
                 ));
 
                 // Also maintain the original directional DIALOGUES_WITH relationship
                 String cypherDialogue = """
-                        MATCH (c1:Character {name: $speaker1})
-                        MATCH (c2:Character {name: $speaker2})
-                        MATCH (s:Scene {dramaTitle: $dramaTitle, number: $sceneNumber})
+                        MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
+                        MATCH (d)-[:HAS_CHARACTER]->(c2:Character)
+                        WHERE c1.castId = $speaker1 AND c2.castId = $speaker2
+                        MATCH (s:Scene {dramaTitle: $dramaTitle, sceneId: $sceneId})
                         MERGE (c1)-[r:DIALOGUES_WITH]->(c2)
                         SET r.sceneCount = COALESCE(r.sceneCount, 0) + 1
                         """;
@@ -190,13 +183,13 @@ public class DramaRepository {
                         "speaker1", currentSpeaker.getSpeaker(),
                         "speaker2", nextSpeaker.getSpeaker(),
                         "dramaTitle", dramaTitle,
-                        "sceneNumber", sceneNumber
+                        "sceneId", scene.getSceneId()
                 ));
             }
         }
     }
 
-    private void createCoAppearanceRelationships(Transaction tx, String dramaTitle, int sceneNumber, Scene scene) {
+    private void createCoAppearanceRelationships(Transaction tx, String dramaTitle, Scene scene) {
         if (scene.getDistinctSpeakers() == null || scene.getDistinctSpeakers().size() < 2) return;
 
         List<String> speakers = scene.getDistinctSpeakers();
@@ -208,9 +201,10 @@ public class DramaRepository {
                 String speaker2 = speakers.get(j);
 
                 String cypher = """
-                        MATCH (c1:Character {name: $speaker1})
-                        MATCH (c2:Character {name: $speaker2})
-                        MATCH (s:Scene {dramaTitle: $dramaTitle, number: $sceneNumber})
+                        MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
+                        MATCH (d)-[:HAS_CHARACTER]->(c2:Character)
+                        WHERE c1.castId = $speaker1 AND c2.castId = $speaker2
+                        MATCH (s:Scene {dramaTitle: $dramaTitle, sceneId: $sceneId})
                         MERGE (c1)-[r:APPEARS_WITH]-(c2)
                         SET r.coAppearanceCount = COALESCE(r.coAppearanceCount, 0) + 1
                         """;
@@ -219,7 +213,7 @@ public class DramaRepository {
                         "speaker1", speaker1,
                         "speaker2", speaker2,
                         "dramaTitle", dramaTitle,
-                        "sceneNumber", sceneNumber
+                        "sceneId", scene.getSceneId()
                 ));
             }
         }

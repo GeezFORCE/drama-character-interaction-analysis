@@ -9,7 +9,6 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 @RegisterRestClient(configKey = "processor")
 @Dependent
 public interface ProcessorRestClient {
-
     @POST
     @Path("/process/{drama}")
     String process(@PathParam("drama") String drama);

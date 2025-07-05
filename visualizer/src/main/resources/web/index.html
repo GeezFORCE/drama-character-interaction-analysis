@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drama Character Interaction Visualizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- D3.js from CDN -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Drama Character Interaction Visualizer</h1>
+    </header>
+    
+    <main>
+        <div class="controls">
+            <label for="drama-select">Select Drama:</label>
+            <select id="drama-select">
+                <option value="">-- Select a Drama --</option>
+            </select>
+        </div>
+        
+        <div class="visualization-container">
+            <div id="graph"></div>
+        </div>
+        
+        <div class="info-panel">
+            <h2>Character Information</h2>
+            <div id="character-info">
+                <p>Select a character in the graph to see details.</p>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>Drama Character Interaction Analysis Project</p>
+    </footer>
+    
+    <script src="visualizer.js"></script>
+</body>
+</html>

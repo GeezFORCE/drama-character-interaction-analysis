@@ -16,10 +16,11 @@
 
 ## Project Structure
 
-- The project is organized as a monorepo with currently 3 different modules
+- The project is organized as a monorepo with currently 4 different modules
 - The `common` module contains the common utilities used across the project
 - The `scraper` module contains the code related to the scraper
 - The `processor` module contains code related to the processor
+- The `visualizer` module contains code for visualizing character interactions
 - The `api/` directory is the root directory storing the collection files for a popular REST API client
   called [Bruno](https://www.usebruno.com) which we use for testing
 
@@ -31,6 +32,7 @@
 ├── api/
 ├── common/
 ├── processor/
+├── visualizer/
 ├── samples
 │   ├── anon-a-larum-for-london.xml
 │   └── drama.xml
@@ -106,6 +108,7 @@ docker logs exist-db
 | eXist-DB  | 8080 |
 | Scraper   | 8081 |
 | Processor | 8082 |
+| Visualizer | 8083 |
 
 - Once the services and the database are up and running, perform a REST API POST request to `/load/all` endpoint of the
   scraper to start the process.
@@ -113,3 +116,26 @@ docker logs exist-db
   documented [here](https://exist-db.org/exist/apps/doc/devguide_rest)
 
 > 💡 Some handy sample data is provided in the directory `samples` if you want to explore the data
+
+## Using the Visualizer
+
+The visualizer module provides a web-based interface for visualizing character interactions in dramas:
+
+1. Make sure the Neo4j database is running and contains processed drama data
+2. Start the visualizer service:
+   ```shell
+   java -jar visualizer/target/visualizer.jar
+   ```
+3. Open a web browser and navigate to `http://localhost:8083`
+4. Select a drama from the dropdown menu to visualize character interactions
+5. Interact with the graph:
+   - Hover over nodes to see character details
+   - Click on a character to view detailed interaction information
+   - Drag nodes to rearrange the graph
+
+The visualizer provides a force-directed graph where:
+- Nodes represent characters (color-coded by gender)
+- Links represent interactions between characters
+- Link thickness indicates the number of interactions
+
+This visualization helps to quickly understand the relationships and interaction patterns between characters in complex dramas.
