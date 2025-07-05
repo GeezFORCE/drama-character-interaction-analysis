@@ -1,8 +1,6 @@
 # Drama Character Interaction Analysis
 
-- Project work for the course Text Technology
-
-> **_The project is still a work in progress with the processor part just finishing up._**
+- Project work for the course Text Technology @ Uni Stuttgart
 
 ## What is the project about?
 
@@ -39,45 +37,24 @@
 └── scraper/
 ```
 
-## How to run the code
+## Setup
 
-> As a pre-requisite, please have Java (preferably JDK v 21) and maven installed
+### Docker Compose
 
-> 💡 If you have IntelliJ IDEA installed, open the code as a project simplifying it
-
-- Make sure you are at the root directory
-- Run `mvn compile` or `mvn package` to compile the project
-- For running each application, run their respective jars.
-- Here is an example for the scraper module
+- Easiest way to set up the project for use it to bring up the docker compose environment.
+- Install [Docker Desktop](https://docs.docker.com/compose/)
+- After setting up docker, please run the following command at the root of the project.
 
 ```shell
-java -jar scraper/target/scraper.jar
+ docker compose -f docker-compose.yaml up -d
 ```
 
-- This will bring up the scraper
-- Similarly, one can bring up the processor module as well
+> ⚠️ If you get an error
+`Cannot connect to the Docker daemon at unix:///Users/user1/.docker/run/docker.sock. Is the docker daemon running?`,
+> please ensure docker is up and running.
 
-> 💡 You can know if the services are up using the health endpoint
-> `curl -s -X GET http://localhost:8080/health`
-> Refer the port mappings in [How to test the code section](#how-to-test-the-code)
-
-## Bringing up eXist-DB
-
-> As a pre-requisite, please have Docker installed
-
-- We have packaged eXist-DB into a docker-compose service
-- To bring up the database, execute the following command
-
-```shell
-docker compose -f docker-compose.yaml up -d
-```
-
-- If you get an error
-  `Cannot connect to the Docker daemon at unix:///Users/user1/.docker/run/docker.sock. Is the docker daemon running?`,
-  please ensure docker is up and running
-
-- Please note that it will take some time for the DB to be up and running, please run the following command and verify
-  the mentioned log appears
+- Please note that it will take some time for the eXist-DB to be up and running, please run the following command and
+  verify the mentioned log appears
 
 ```shell
 docker logs exist-db
@@ -94,6 +71,28 @@ docker logs exist-db
 25 Jun 2025 19:03:53,169 [main] INFO  (JettyStart.java [run]:316) - /iprange (IPrange filter) 
 ```
 
+### Running the JARs
+
+> ⚠️ As a pre-requisite, please have Java (preferably JDK v 21+) and maven installed
+> 💡 If you have IntelliJ IDEA installed, open the code as a project will simplify the process
+
+- Make sure you are at the root directory
+- Run `mvn compile` or `mvn package` to compile the project
+- For running each application, run their respective jars.
+- Here is an example for the scraper module
+
+```shell
+java -jar scraper/target/scraper.jar
+```
+
+- This will bring up the scraper
+- Similarly, one can bring up the processor and visualizer
+
+> ⚠️ Please take care to bring up the dependent DB and modules for the application to work
+> 💡 You can know if the services are up using the health endpoint
+> `curl -s -X GET http://localhost:<port>/health`
+> Refer the port mappings in [How to test the code section](#how-to-test-the-code)
+
 ## How to test the code
 
 > It will be easier if you have [Bruno](https://www.usebruno.com) installed.
@@ -103,11 +102,11 @@ docker logs exist-db
 
 - Following are the port mappings for the services
 
-| Service   | Port |
-|-----------|------|
-| eXist-DB  | 8080 |
-| Scraper   | 8081 |
-| Processor | 8082 |
+| Service    | Port |
+|------------|------|
+| eXist-DB   | 8080 |
+| Scraper    | 8081 |
+| Processor  | 8082 |
 | Visualizer | 8083 |
 
 - Once the services and the database are up and running, perform a REST API POST request to `/load/all` endpoint of the
@@ -129,13 +128,14 @@ The visualizer module provides a web-based interface for visualizing character i
 3. Open a web browser and navigate to `http://localhost:8083`
 4. Select a drama from the dropdown menu to visualize character interactions
 5. Interact with the graph:
-   - Hover over nodes to see character details
-   - Click on a character to view detailed interaction information
-   - Drag nodes to rearrange the graph
+    - Hover over nodes to see character details
+    - Click on a character to view detailed interaction information
+    - Drag nodes to rearrange the graph
 
 The visualizer provides a force-directed graph where:
+
 - Nodes represent characters (color-coded by gender)
 - Links represent interactions between characters
 - Link thickness indicates the number of interactions
 
-This visualization helps to quickly understand the relationships and interaction patterns between characters in complex dramas.
+![Web Interface](dcia-web-interface.png)
