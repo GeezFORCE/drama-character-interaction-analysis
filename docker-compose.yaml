@@ -101,7 +101,6 @@ services:
       apt-get update &&
       apt-get install -y openjdk-11-jdk curl wget unzip bzip2 &&
       export JAVA_HOME=\$(dirname \$(dirname \$(readlink -f \$(which java)))) &&
-      echo \"JAVA_HOME set to: \$JAVA_HOME\" &&
       if [ ! -f /opt/exist/bin/startup.sh ]; then
         wget -O exist.tar.bz2 https://github.com/eXist-db/exist/releases/download/eXist-6.4.0/exist-distribution-6.4.0-unix.tar.bz2 &&
         tar -xjf exist.tar.bz2 --strip-components=1 &&
