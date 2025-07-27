@@ -4,6 +4,9 @@ import lombok.*;
 
 import java.util.List;
 
+/**
+ *  Represents a dramatic work, including its title, author, date, cast members, and scenes.
+ */
 @Data
 @ToString
 @AllArgsConstructor

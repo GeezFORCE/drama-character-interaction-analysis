@@ -9,6 +9,13 @@ import lombok.ToString;
 import java.util.Date;
 import java.util.List;
 
+/**
+ *  * Represents a collection in an eXist-db database.
+ *
+ *  This class is designed to map to an XML structure representing a collection,
+ *  including metadata such as creation date, owner, permissions, and a list of resources.
+ *
+ */
 @Data
 @ToString
 @NoArgsConstructor

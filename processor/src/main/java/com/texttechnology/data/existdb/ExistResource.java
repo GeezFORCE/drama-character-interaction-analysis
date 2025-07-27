@@ -7,6 +7,11 @@ import lombok.ToString;
 
 import java.util.Date;
 
+/**
+ * Represents a resource in an eXist-db system, typically obtained via XML-based API responses.
+ *
+ * Fields are annotated for XML attribute binding using Jackson's XML module.
+ */
 @Data
 @ToString
 @NoArgsConstructor

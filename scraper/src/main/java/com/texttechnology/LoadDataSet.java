@@ -106,8 +106,7 @@ public class LoadDataSet {
 
 
     /**
-     * Gets the TEI content of the drama
-     *
+     * Insert the play to existDb
      * @param play Name of the play
      */
     private void insertPlayToExistDb(String play) {

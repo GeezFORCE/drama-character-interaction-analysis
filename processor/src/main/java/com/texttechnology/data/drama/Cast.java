@@ -4,6 +4,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
 
+/**
+ * Represents a cast member with unique id, name and sex
+ */
 @Data
 @ToString
 @Builder
