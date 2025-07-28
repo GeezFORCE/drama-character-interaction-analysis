@@ -102,14 +102,16 @@ java -jar scraper/target/scraper.jar
 
 - Following are the port mappings for the services
 
-| Service    | Port |
-|------------|------|
-| eXist-DB   | 8080 |
-| Scraper    | 8081 |
-| Processor  | 8082 |
-| Visualizer | 8083 |
+| Service      | Port |
+|--------------|------|
+| eXist-DB     | 8080 |
+| Scraper      | 8081 |
+| Processor    | 8082 |
+| Visualizer   | 8083 |
+| Neo4j server | 7687 |
+| Neo4j UI     | 7474 |
 
-- Once the services and the database are up and running, perform a REST API POST request to `/load/all` endpoint of the
+- Once the services and the database are up and running, perform a REST API PUT request to `/load/all` endpoint of the
   scraper to start the process.
 - You can verify the data insertion using RESTful API provided by eXist-DB as
   documented [here](https://exist-db.org/exist/apps/doc/devguide_rest)
@@ -139,3 +141,45 @@ The visualizer provides a force-directed graph where:
 - Link thickness indicates the number of interactions
 
 ![Web Interface](dcia-web-interface.png)
+
+## Using the Neo4j UI
+
+The graph data in Neo4j can be visualized in the UI using queries written in Cypher. 
+
+1. Open the Neo4j UI `http://localhost:7474/` on a browser
+2. Login using the user `neo4j` and password `your_password`
+3. Query data using [Cypher](https://neo4j.com/docs/cypher-manual/current/queries/basic/)
+
+Some interesting queries are 
+
+1. Get a list of all drama titles
+
+```cypher
+MATCH (d:Drama) RETURN d.title as title ORDER BY title;
+```
+
+![drama query](drama_query.png)
+
+2. Get characters of a drama
+
+Replace `$dramaTitle` with the name of the drama
+
+```cypher
+MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c:Character)
+RETURN c.name as name, c.sex as gender
+```
+
+![character query](character_query.png)
+
+3. Get character interactions in a drama
+
+Replace `$dramaTitle` with the name of the drama
+
+```cypher
+MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
+MATCH (c1)-[r:INTERACTS_WITH]-(c2:Character)
+  WHERE c1.name < c2.name  // To avoid duplicate pairs
+RETURN c1.name as source, c2.name as target, r.interactionCount as value
+```
+
+![character interaction query](character_interaction_query.png)
