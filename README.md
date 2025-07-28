@@ -95,10 +95,10 @@ java -jar scraper/target/scraper.jar
 
 ## How to test the code
 
-> It will be easier if you have [Bruno](https://www.usebruno.com) installed.
-> You can also use other API clients like `Postman` or even `curl` from the command line
+- You can test the code with a REST API Client like Bruno or using cURL
+- All the cURL commands are provided in the file [curl-commands.sh](/api/curl-commands.sh)
 
-- Open the folder `api` in bruno to view the collection
+- If you are using [Bruno](https://www.usebruno.com), open the folder `api` in bruno to view the collection
 
 - Following are the port mappings for the services
 
