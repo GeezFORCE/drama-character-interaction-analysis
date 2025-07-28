@@ -12,6 +12,22 @@
 - That’s what this project is about, turning complex, classical drama into a clear visualization of character
   interaction.
 
+## Project Aspects
+
+- **Collect** : We collect the drama corpus from DraCor, specifically English drama corpus
+- **Prepare** : We convert the collected XML data to a format suitable for Neo4J
+- **Access** : We expose a web UI to visualize the relationships
+
+## XML Related Technologies
+
+- The data collected is TEI encoded XML data
+- Data relevant to the project is extracted using XPath
+
+## Extension
+
+- We introduced eXist-DB, an XML native database to store the TEI encoded data for easy access.
+- We interact with the database using RESTful APIs exposed by eXist-DB
+
 ## Project Structure
 
 - The project is organized as a monorepo with currently 4 different modules
@@ -122,14 +138,10 @@ java -jar scraper/target/scraper.jar
 
 The visualizer module provides a web-based interface for visualizing character interactions in dramas:
 
-1. Make sure the Neo4j database is running and contains processed drama data
-2. Start the visualizer service:
-   ```shell
-   java -jar visualizer/target/visualizer.jar
-   ```
-3. Open a web browser and navigate to `http://localhost:8083`
-4. Select a drama from the dropdown menu to visualize character interactions
-5. Interact with the graph:
+1. Make sure the stack is up and running, refer ![Docker Compose](#docker-compose)
+2. Open a web browser and navigate to `http://localhost:8083`
+3. Select a drama from the dropdown menu to visualize character interactions
+4. Interact with the graph:
     - Hover over nodes to see character details
     - Click on a character to view detailed interaction information
     - Drag nodes to rearrange the graph
