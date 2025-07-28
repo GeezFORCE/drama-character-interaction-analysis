@@ -12,7 +12,6 @@ import org.neo4j.driver.Transaction;
 import org.neo4j.driver.Values;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @ApplicationScoped
@@ -51,6 +50,37 @@ public class DramaRepository {
             SET r.lineCount = $lineCount,
                 r.lines = $lines
             """;
+
+    private static final String CREATE_INTERACTS_WITH_RELATION = """
+                        MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
+                        MATCH (d)-[:HAS_CHARACTER]->(c2:Character)
+                        WHERE c1.castId = $speaker1 AND c2.castId = $speaker2
+                        MATCH (s:Scene {dramaTitle: $dramaTitle, sceneId: $sceneId})
+                        MERGE (c1)-[r:INTERACTS_WITH]-(c2)
+                        SET r.interactionCount = COALESCE(r.interactionCount, 0) + 1,
+                            r.lastScene = $sceneId,
+                            r.dramaTitle = $dramaTitle
+                        MERGE (c1)-[:INTERACTS_IN]->(s)
+                        MERGE (c2)-[:INTERACTS_IN]->(s)
+                        """;
+
+    private static final String CREATE_DIALOGUES_WITH_RELATION = """
+                        MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
+                        MATCH (d)-[:HAS_CHARACTER]->(c2:Character)
+                        WHERE c1.castId = $speaker1 AND c2.castId = $speaker2
+                        MATCH (s:Scene {dramaTitle: $dramaTitle, sceneId: $sceneId})
+                        MERGE (c1)-[r:DIALOGUES_WITH]->(c2)
+                        SET r.sceneCount = COALESCE(r.sceneCount, 0) + 1
+                        """;
+
+    private static final String CREATE_COAPPEARANCE_RELATION = """
+                        MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
+                        MATCH (d)-[:HAS_CHARACTER]->(c2:Character)
+                        WHERE c1.castId = $speaker1 AND c2.castId = $speaker2
+                        MATCH (s:Scene {dramaTitle: $dramaTitle, sceneId: $sceneId})
+                        MERGE (c1)-[r:APPEARS_WITH]-(c2)
+                        SET r.coAppearanceCount = COALESCE(r.coAppearanceCount, 0) + 1
+                        """;
 
     @Inject
     public DramaRepository(Driver driver) {
@@ -191,20 +221,7 @@ public class DramaRepository {
             // Don't create self-dialogue relationships
             if (!currentSpeaker.getSpeaker().equals(nextSpeaker.getSpeaker())) {
                 // Create bidirectional INTERACTS_WITH relationship to represent character interaction
-                String cypherInteraction = """
-                        MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
-                        MATCH (d)-[:HAS_CHARACTER]->(c2:Character)
-                        WHERE c1.castId = $speaker1 AND c2.castId = $speaker2
-                        MATCH (s:Scene {dramaTitle: $dramaTitle, sceneId: $sceneId})
-                        MERGE (c1)-[r:INTERACTS_WITH]-(c2)
-                        SET r.interactionCount = COALESCE(r.interactionCount, 0) + 1,
-                            r.lastScene = $sceneId,
-                            r.dramaTitle = $dramaTitle
-                        MERGE (c1)-[:INTERACTS_IN]->(s)
-                        MERGE (c2)-[:INTERACTS_IN]->(s)
-                        """;
-
-                tx.run(cypherInteraction, Values.parameters(
+                tx.run(CREATE_INTERACTS_WITH_RELATION, Values.parameters(
                         "speaker1", currentSpeaker.getSpeaker(),
                         "speaker2", nextSpeaker.getSpeaker(),
                         "dramaTitle", dramaTitle,
@@ -212,16 +229,7 @@ public class DramaRepository {
                 ));
 
                 // Also maintain the original directional DIALOGUES_WITH relationship
-                String cypherDialogue = """
-                        MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
-                        MATCH (d)-[:HAS_CHARACTER]->(c2:Character)
-                        WHERE c1.castId = $speaker1 AND c2.castId = $speaker2
-                        MATCH (s:Scene {dramaTitle: $dramaTitle, sceneId: $sceneId})
-                        MERGE (c1)-[r:DIALOGUES_WITH]->(c2)
-                        SET r.sceneCount = COALESCE(r.sceneCount, 0) + 1
-                        """;
-
-                tx.run(cypherDialogue, Values.parameters(
+                tx.run(CREATE_DIALOGUES_WITH_RELATION, Values.parameters(
                         "speaker1", currentSpeaker.getSpeaker(),
                         "speaker2", nextSpeaker.getSpeaker(),
                         "dramaTitle", dramaTitle,
@@ -248,99 +256,13 @@ public class DramaRepository {
                 String speaker1 = speakers.get(i);
                 String speaker2 = speakers.get(j);
 
-                String cypher = """
-                        MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
-                        MATCH (d)-[:HAS_CHARACTER]->(c2:Character)
-                        WHERE c1.castId = $speaker1 AND c2.castId = $speaker2
-                        MATCH (s:Scene {dramaTitle: $dramaTitle, sceneId: $sceneId})
-                        MERGE (c1)-[r:APPEARS_WITH]-(c2)
-                        SET r.coAppearanceCount = COALESCE(r.coAppearanceCount, 0) + 1
-                        """;
-
-                tx.run(cypher, Values.parameters(
+                tx.run(CREATE_COAPPEARANCE_RELATION, Values.parameters(
                         "speaker1", speaker1,
                         "speaker2", speaker2,
                         "dramaTitle", dramaTitle,
                         "sceneId", scene.getSceneId()
                 ));
             }
-        }
-    }
-
-    public List<Map<String, Object>> getCharacterInteractions(String dramaTitle) {
-        try (Session session = driver.session()) {
-            String cypher = """
-                    MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
-                    MATCH (c1)-[r]->(c2:Character)
-                    WHERE type(r) IN ['DIALOGUES_WITH', 'INTERACTS_WITH']
-                    RETURN c1.name as character1, c2.name as character2, 
-                           CASE type(r) 
-                             WHEN 'DIALOGUES_WITH' THEN r.sceneCount 
-                             WHEN 'INTERACTS_WITH' THEN r.interactionCount 
-                             ELSE 0 
-                           END as interactionCount,
-                           type(r) as relationshipType
-                    ORDER BY interactionCount DESC
-                    """;
-
-            return session.run(cypher, Values.parameters("dramaTitle", dramaTitle))
-                    .list(record -> Map.of(
-                            "character1", record.get("character1").asString(),
-                            "character2", record.get("character2").asString(),
-                            "interactionCount", record.get("interactionCount").asInt(),
-                            "relationshipType", record.get("relationshipType").asString()
-                    ));
-        }
-    }
-
-    // Method to get scene analysis
-    public List<Map<String, Object>> getSceneAnalysis(String dramaTitle) {
-        try (Session session = driver.session()) {
-            String cypher = """
-                    MATCH (d:Drama {title: $dramaTitle})-[:HAS_SCENE]->(s:Scene)
-                    OPTIONAL MATCH (c:Character)-[:SPEAKS_IN]->(s)
-                    RETURN s.number as sceneNumber, 
-                           s.speakerCount as speakerCount,
-                           collect(c.name) as characters,
-                           s.distinctSpeakers as distinctSpeakers
-                    ORDER BY s.number
-                    """;
-
-            return session.run(cypher, Values.parameters("dramaTitle", dramaTitle))
-                    .list(record -> Map.of(
-                            "sceneNumber", record.get("sceneNumber").asInt(),
-                            "speakerCount", record.get("speakerCount").asInt(),
-                            "characters", record.get("characters").asList(),
-                            "distinctSpeakers", record.get("distinctSpeakers").asList()
-                    ));
-        }
-    }
-
-    // Method to get detailed character interactions
-    public List<Map<String, Object>> getDetailedCharacterInteractions(String dramaTitle) {
-        try (Session session = driver.session()) {
-            String cypher = """
-                    MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
-                    MATCH (c1)-[r:INTERACTS_WITH]-(c2:Character)
-                    WHERE c1.name < c2.name  // To avoid duplicate pairs
-                    RETURN c1.name as character1, 
-                           c2.name as character2, 
-                           r.interactionCount as interactionCount,
-                           r.lastScene as lastScene,
-                           r.dramaTitle as dramaTitle,
-                           [(c1)-[:INTERACTS_IN]->(s:Scene)<-[:INTERACTS_IN]-(c2) | s.number] as sharedScenes
-                    ORDER BY r.interactionCount DESC
-                    """;
-
-            return session.run(cypher, Values.parameters("dramaTitle", dramaTitle))
-                    .list(record -> Map.of(
-                            "character1", record.get("character1").asString(),
-                            "character2", record.get("character2").asString(),
-                            "interactionCount", record.get("interactionCount").asInt(),
-                            "lastScene", record.get("lastScene").asInt(),
-                            "dramaTitle", record.get("dramaTitle").asString(),
-                            "sharedScenes", record.get("sharedScenes").asList()
-                    ));
         }
     }
 }

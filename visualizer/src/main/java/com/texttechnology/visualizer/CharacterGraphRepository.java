@@ -17,6 +17,22 @@ public class CharacterGraphRepository {
 
     private final Driver driver;
 
+    private static final String DRAMA_TITLES_QUERY = """
+            MATCH (d:Drama) RETURN d.title as title ORDER BY title
+            """;
+
+    private static final String CHARACTERS_QUERY = """
+            MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c:Character)
+            RETURN c.name as name, c.sex as gender
+            """;
+
+    private static final String CHARACTER_INTERACTION_QUERY = """
+            MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
+            MATCH (c1)-[r:INTERACTS_WITH]-(c2:Character)
+            WHERE c1.name < c2.name  // To avoid duplicate pairs
+            RETURN c1.name as source, c2.name as target, r.interactionCount as value
+            """;
+
     @Inject
     public CharacterGraphRepository(Driver driver) {
         this.driver = driver;
@@ -30,12 +46,7 @@ public class CharacterGraphRepository {
     public Map<String, Object> getCharacterInteractionGraph(String dramaTitle) {
         try (Session session = driver.session()) {
             // Get characters (nodes)
-            String characterQuery = """
-                    MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c:Character)
-                    RETURN c.name as name, c.sex as gender
-                    """;
-            
-            List<Map<String, Object>> nodes = session.run(characterQuery, Values.parameters("dramaTitle", dramaTitle))
+            List<Map<String, Object>> nodes = session.run(CHARACTERS_QUERY, Values.parameters("dramaTitle", dramaTitle))
                     .list(record -> Map.of(
                             "id", record.get("name").asString(),
                             "name", record.get("name").asString(),
@@ -43,14 +54,7 @@ public class CharacterGraphRepository {
                     ));
             
             // Get interactions (links)
-            String interactionQuery = """
-                    MATCH (d:Drama {title: $dramaTitle})-[:HAS_CHARACTER]->(c1:Character)
-                    MATCH (c1)-[r:INTERACTS_WITH]-(c2:Character)
-                    WHERE c1.name < c2.name  // To avoid duplicate pairs
-                    RETURN c1.name as source, c2.name as target, r.interactionCount as value
-                    """;
-            
-            List<Map<String, Object>> links = session.run(interactionQuery, Values.parameters("dramaTitle", dramaTitle))
+            List<Map<String, Object>> links = session.run(CHARACTER_INTERACTION_QUERY, Values.parameters("dramaTitle", dramaTitle))
                     .list(record -> Map.of(
                             "source", record.get("source").asString(),
                             "target", record.get("target").asString(),
@@ -71,8 +75,7 @@ public class CharacterGraphRepository {
      */
     public List<String> getAllDramaTitles() {
         try (Session session = driver.session()) {
-            String query = "MATCH (d:Drama) RETURN d.title as title ORDER BY title";
-            return session.run(query).list(record -> record.get("title").asString());
+            return session.run(DRAMA_TITLES_QUERY).list(record -> record.get("title").asString());
         }
     }
 }
