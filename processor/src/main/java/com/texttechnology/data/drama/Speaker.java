@@ -6,6 +6,9 @@ import lombok.ToString;
 
 import java.util.List;
 
+/**
+ * Represents a speaker in a scene, along with the lines they deliver.
+ */
 @Data
 @ToString
 @Builder

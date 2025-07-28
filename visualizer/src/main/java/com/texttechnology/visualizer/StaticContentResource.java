@@ -13,6 +13,9 @@ import java.io.InputStream;
 @RequestScoped
 public class StaticContentResource {
 
+    /**
+     * @return response index.html
+     */
     @GET
     @Produces(MediaType.TEXT_HTML)
     public Response getIndex() {
@@ -20,6 +23,9 @@ public class StaticContentResource {
         return Response.ok(is).build();
     }
 
+    /**
+     * @return response styles.css
+     */
     @GET
     @Path("/styles.css")
     @Produces("text/css")
@@ -28,6 +34,10 @@ public class StaticContentResource {
         return Response.ok(is).build();
     }
 
+    /**
+     *
+     * @return response visualizer script, responsible for drawing the graph in UI
+     */
     @GET
     @Path("/visualizer.js")
     @Produces("application/javascript")

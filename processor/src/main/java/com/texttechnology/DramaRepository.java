@@ -57,6 +57,10 @@ public class DramaRepository {
         this.driver = driver;
     }
 
+    /**
+     *  Insert {@link Drama} node into Neo4J using write transaction
+     * @param drama to be inserted
+     */
     public void insertDrama(Drama drama) {
         try (Session session = driver.session()) {
             session.writeTransaction(tx -> {
@@ -66,6 +70,11 @@ public class DramaRepository {
         }
     }
 
+    /**
+     * Create drama node, cast nodes and scenarios and interactions
+     * @param tx an instance of neo4j driver transaction
+     * @param drama whose nodes and cast that need to be inserted
+     */
     private void insertDramaWithTransaction(Transaction tx, Drama drama) {
         // 1. Create Drama node
         createDramaNode(tx, drama);
@@ -77,6 +86,11 @@ public class DramaRepository {
         createScenesAndInteractions(tx, drama);
     }
 
+    /**
+     * Create a drama node
+     * @param tx an instance of neo4j driver transaction
+     * @param drama to be inserted
+     */
     private void createDramaNode(Transaction tx, Drama drama) {
         tx.run(CREATE_DRAMA_NODE, Values.parameters(
                 "title", drama.getTitle(),
@@ -85,6 +99,11 @@ public class DramaRepository {
         ));
     }
 
+    /**
+     * Create the cast nodes for a drama
+     * @param tx an instance of neo4j driver transaction
+     * @param drama to be inserted
+     */
     private void createCastNodes(Transaction tx, Drama drama) {
         drama.getCastList().stream().peek(cast -> log.error("Cast ID : {}", cast.getId())).forEach(cast -> tx.run(CREATE_CAST_NODE, Values.parameters(
                 "dramaTitle", drama.getTitle(),
@@ -94,6 +113,11 @@ public class DramaRepository {
         )));
     }
 
+    /**
+     * For each scene, create a node and interactions between characters
+     * @param tx an instance of neo4j driver transaction
+     * @param drama to be inserted
+     */
     private void createScenesAndInteractions(Transaction tx, Drama drama) {
         if (drama.getScenes() == null) return;
 
@@ -112,6 +136,12 @@ public class DramaRepository {
         }
     }
 
+    /**
+     * Create a scene node
+     * @param tx an instance of neo4j driver transaction
+     * @param dramaTitle title of the drama
+     * @param scene to be inserted
+     */
     private void createSceneNode(Transaction tx, String dramaTitle, Scene scene) {
         tx.run(CREATE_SCENE_NODE, Values.parameters(
                 "dramaTitle", dramaTitle,
@@ -121,6 +151,12 @@ public class DramaRepository {
         ));
     }
 
+    /**
+     * For a scene, create a speaker relation
+     * @param tx an instance of neo4j driver transaction
+     * @param dramaTitle title of the drama
+     * @param scene to be inserted
+     */
     private void createSpeakerInteractions(Transaction tx, String dramaTitle, Scene scene) {
         if (scene.getSpeakers() == null) return;
 
@@ -138,6 +174,12 @@ public class DramaRepository {
         createDialogueSequence(tx, dramaTitle, scene);
     }
 
+    /**
+     * For each speaker, create bidirectional character interaction
+     * @param tx an instance of neo4j driver transaction
+     * @param dramaTitle title of the drama
+     * @param scene to be inserted
+     */
     private void createDialogueSequence(Transaction tx, String dramaTitle, Scene scene) {
         if (scene.getSpeakers() == null || scene.getSpeakers().size() < 2) return;
 
@@ -189,6 +231,12 @@ public class DramaRepository {
         }
     }
 
+    /**
+     * For each speaker, create co-appearance relationships
+     * @param tx an instance of neo4j driver transaction
+     * @param dramaTitle title of the drama
+     * @param scene to be inserted
+     */
     private void createCoAppearanceRelationships(Transaction tx, String dramaTitle, Scene scene) {
         if (scene.getDistinctSpeakers() == null || scene.getDistinctSpeakers().size() < 2) return;
 

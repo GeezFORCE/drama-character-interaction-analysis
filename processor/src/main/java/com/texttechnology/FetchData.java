@@ -24,10 +24,10 @@ public class FetchData {
     DramaRepository dramaRepository;
 
     /**
-     * Loads all the drama inserted into the eXist-DB by the scraper and process it.
-     * Implemented as a periodic job (might move to a REST API in the future)
+     * Loads the drama inserted into the eXist-db by the scraper and process it.
+     * Triggered by scrapper when a play is inserted into eXist-db
      *
-     * @return
+     * @return REST response accepted
      */
     @POST
     @Path("/{drama}")

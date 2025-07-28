@@ -22,6 +22,9 @@ public class CharacterGraphResource {
         this.repository = repository;
     }
 
+    /**
+     * @return list of drama titles
+     */
     @GET
     @Path("/dramas")
     @Produces(MediaType.APPLICATION_JSON)
@@ -35,6 +38,10 @@ public class CharacterGraphResource {
         }
     }
 
+    /**
+     * @param title name of a drama (user selects the drama from drop down)
+     * @return  a character interaction graph for a drama from neo4j
+     */
     @GET
     @Path("/drama/{title}")
     @Produces(MediaType.APPLICATION_JSON)

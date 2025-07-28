@@ -89,6 +89,9 @@ nb-configuration.xml
 ##############################
 *.log
 
-.idea
+.idea/*.xml
 
+common/target/*
+scraper/target/*
+processor/target/*
 visualizer/target/*
