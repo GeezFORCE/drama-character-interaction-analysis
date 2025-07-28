@@ -17,7 +17,7 @@ import org.eclipse.microprofile.openapi.annotations.info.License;
                 description = "Visualizes character interactions in dramas",
                 contact = @Contact(
                         name = "Drama Character Interaction Analysis",
-                        url = "https://github.com/yourusername/drama-character-interaction-analysis"),
+                        url = "https://github.com/GeezFORCE/drama-character-interaction-analysis"),
                 license = @License(
                         name = "Apache 2.0",
                         url = "https://www.apache.org/licenses/LICENSE-2.0.html"))
